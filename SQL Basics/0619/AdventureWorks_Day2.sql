@@ -223,15 +223,17 @@ FROM Suppliers su CROSS JOIN Shippers sh
 
 -- 24.  Display the products order each day. Show Order date and Product Name.
 
-SELECT dt.OrderDATE, p.ProductName
-FROM (SELECT o.OrderDate, od.ProductID
-FROM Orders o Inner JOIN [Order Details] od ON o.OrderID = od.OrderID) dt Left JOIN Products p ON dt.ProductID = p.ProductID
+SELECT o.OrderDate, p.ProductName
+FROM Orders o
+INNER JOIN [Order Details] od ON o.OrderID = od.OrderID
+LEFT JOIN Products p ON od.ProductID = p.ProductID
+ORDER BY o.OrderDate
 
 -- 25.  Displays pairs of employees who have the same job title.
 
 SELECT (e1.FirstName + ' ' + e1.LastName) AS Employee1, (e2.FirstName + ' ' + e2.LastName) AS Employee2
 FROM Employees e1, Employees e2
-WHERE e1.EmployeeID != e2.EmployeeID AND e1.Title = e2.Title
+WHERE e1.EmployeeID < e2.EmployeeID AND e1.Title = e2.Title
 
 -- 26.  Display all the Managers who have more than 2 employees reporting to them.
 
@@ -240,12 +242,13 @@ GO
 
 WITH Managers
 AS(
-SELECT e.ReportsTo AS ManagerID, COUNT(e.ReportsTo) AS NumOfEmployeesReporting
-FROM Employees e
-WHERE ReportsTo IS NOT NULL
-GROUP BY e.ReportsTo
+    SELECT e.ReportsTo AS ManagerID, COUNT(e.ReportsTo) AS NumOfEmployeesReporting
+    FROM Employees e
+    WHERE ReportsTo IS NOT NULL
+    GROUP BY e.ReportsTo
+    HAVING COUNT(*) > 2
 )
-SELECT (e.FirstName + ' ' + e.LastName) AS ManagerName
+SELECT (e.FirstName + ' ' + e.LastName) AS ManagerName, m.NumOfEmployeesReporting
 FROM Managers m LEFT JOIN Employees e ON m.ManagerID = e.EmployeeID
 
 -- 27.  Display the customers and suppliers by city. The results should have the following columns
@@ -258,9 +261,9 @@ FROM Managers m LEFT JOIN Employees e ON m.ManagerID = e.EmployeeID
 
 -- Type (Customer or Supplier)
 
-SELECT City, CompanyName AS Name, ContactName, 'Customer' AS Type
-FROM Customers
+SELECT c.City, c.CompanyName AS Name, c.ContactName, 'Customer' AS Type
+FROM Customers c
 UNION ALL
-SELECT City, CompanyName AS Name, ContactName, 'Supplier' AS Type
-FROM Suppliers
+SELECT s.City, s.CompanyName AS Name, s.ContactName, 'Supplier' AS Type
+FROM Suppliers s
 ORDER BY City, Type, Name
